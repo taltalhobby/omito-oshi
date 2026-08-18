@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>おみとおし</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23ffffff'/%3E%3Cpath d='M50 85 C50 85 10 55 10 30 C10 15 25 5 40 15 C50 22 50 22 50 22 C50 22 50 22 60 15 C75 5 90 15 90 30 C90 55 50 85 50 85 Z' fill='%23FF4F9A'/%3E%3Ctext x='50' y='55' font-family='sans-serif' font-weight='bold' font-size='45' fill='%23ffffff' text-anchor='middle' alignment-baseline='middle'%3E%C2%A5%3C/text%3E%3C/svg%3E">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #FF4F9A;
+            --primary-mid: #FFB3D1;
+            --primary-light: #FFEBF3;
+            --secondary: #9C27B0;
+            --bg: #FFF5F8;
+            --card-bg: #FFFFFF;
+            --text-main: #333333;
+            --text-sub: #757575;
+            --warn: #FFA726;
+            --danger: #FF5252;
+            --warning: #FF9800;
+            --success: #66BB6A;
+            --gray-light: #E0E0E0;
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Noto Sans JP', sans-serif; background-color: var(--bg); color: var(--text-main);
+            padding-bottom: calc(70px + var(--safe-bottom)); -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none;
+        }
+
+        .num-font { font-family: 'Poppins', sans-serif; }
+        h1, h2, h3 { color: var(--text-main); }
+        .text-sm { font-size: 12px; color: var(--text-sub); }
+        .text-danger { color: var(--danger); }
+        .text-warn { color: var(--warn); }
+        
+        .container { padding: 16px; max-width: 1200px; margin: 0 auto; }
+        .page { display: none; animation: fadeIn 0.3s ease; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .card { background: var(--card-bg); border-radius: 16px; padding: 16px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(255, 79, 154, 0.08); }
+
+        /* Desktop Optimization (Moved below) */
+
+        button { border: none; outline: none; cursor: pointer; font-family: inherit; border-radius: 8px; padding: 10px 16px; font-size: 14px; font-weight: 700; transition: transform 0.1s; }
+        button:active { transform: scale(0.96); }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; box-shadow: 0 4px 10px rgba(255, 79, 154, 0.3); }
+        .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .btn-block { width: 100%; display: block; }
+        
+        input[type="text"], input[type="number"], select {
+            width: 100%; padding: 12px; border: 1px solid #E0E0E0; border-radius: 8px; font-size: 16px; font-family: inherit; margin-bottom: 12px; background: var(--card-bg); color: var(--text-main);
+        }
+        input:focus, select:focus { outline: 2px solid var(--primary-light); border-color: var(--primary); }
+
+        .navbar {
+            position: fixed; bottom: 0; left: 0; right: 0; height: calc(65px + var(--safe-bottom)); background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: flex; justify-content: space-around; align-items: center; border-top: 1px solid rgba(0,0,0,0.05); padding-bottom: var(--safe-bottom); z-index: 100;
+        }
+        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-sub); width: 25%; height: 100%; font-size: 10px; cursor: pointer; }
+        .nav-item.active { color: var(--primary); font-weight: 700; }
+        .nav-icon { font-size: 24px; margin-bottom: 2px; display: flex; justify-content: center; align-items: center; }
+
+        /* Home */
+        #page-home { display: none; height: calc(100vh - 70px - var(--safe-bottom)); padding: 12px; overflow: hidden; flex-direction: column; gap: 12px; width: 100%; }
+        #page-home.active { display: flex; }
+        
+        
+        .drop-zone { transition: background 0.2s, box-shadow 0.2s; border-radius: 16px; flex: 1 1 0; min-height: 0; position: relative; }
+        .drop-zone.drag-over { background: var(--primary-light); box-shadow: inset 0 0 0 2px var(--primary); }
+        .drop-zone.drag-over-danger { background: #FFEBEE; box-shadow: inset 0 0 0 2px var(--danger); }
+
+        #zone-consume { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px; background: var(--card-bg); box-shadow: 0 4px 12px rgba(255, 79, 154, 0.08); }
+        #zone-consume::before { content: '🔥 ここにドロップで消費'; position: absolute; top: 8px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: bold; color: var(--warn); opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 10; }
+        #zone-consume.drag-over::before { opacity: 1; }
+        #zone-consume.drag-over .meter-container { transform: scale(0.95); opacity: 0.8; }
+
+        .meter-container { flex: 1; width: 100%; display: flex; justify-content: center; align-items: center; max-height: 100%; position: relative; transition: all 0.2s; }
+        .meter { height: 100%; aspect-ratio: 1; max-width: 100%; max-height: 280px; border-radius: 50%; display: flex; justify-content: center; align-items: center; position: relative; }
+        .meter-inner { width: 78%; height: 78%; background: var(--card-bg); border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 0 10px rgba(0,0,0,0.05); z-index: 2; }
+        .meter-title { font-size: clamp(10px, 2.5vh, 12px); font-weight: 700; color: var(--text-sub); }
+        .meter-value { font-size: clamp(28px, 8vh, 52px); font-weight: 700; line-height: 1; margin: 4px 0 0 0; color: var(--text-main); }
+        .meter-unit { font-size: clamp(10px, 2vh, 11px); font-weight: 700; color: var(--text-sub); margin-bottom: 2px;}
+        .meter-budget { font-size: clamp(12px, 2.5vh, 14px); font-weight: 700; color: var(--text-sub); opacity: 0.6; }
+
+        .meter-badge { position: absolute; padding: 4px 10px; border-radius: 20px; font-weight: bold; font-size: 11px; color: white; z-index: 3; font-family: 'Poppins', sans-serif; border: 2px solid white; transform: translate(-50%, -50%); transition: opacity 0.2s; }
+        .badge-consume { background: #999999; }
+        .badge-reserve { background: var(--primary-mid); }
+        .badge-free { background: var(--primary); }
+
+        #zone-reserve { padding: 12px; background: var(--card-bg); border: 2px dashed #FFB8D2; display: flex; flex-direction: column; box-shadow: 0 4px 12px rgba(255, 79, 154, 0.08); overflow-y: auto; }
+        .zone-title { font-size: 12px; font-weight: bold; color: var(--primary); margin-bottom: 8px; pointer-events: none; }
+        .flex-row-wrap { display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start; }
+
+        #zone-casts { overflow-x: auto; overflow-y: hidden; white-space: nowrap; padding-bottom: 8px; display: flex; align-items: flex-start; gap: 12px; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; }
+        @media (min-width: 800px) {
+            #zone-casts { flex-wrap: wrap; overflow-x: visible; overflow-y: visible; }
+        }
+        .cast-card { display: inline-block; white-space: normal; vertical-align: top; width: 240px; height: 100%; background: var(--card-bg); border-radius: 12px; padding: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); scroll-snap-align: start; flex-shrink: 0; overflow-y: auto; }
+        .cast-blocks-container { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+        
+        .pkg-block { background: var(--bg); color: var(--text-main); border: 1px solid #E0E0E0; border-radius: 8px; padding: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 90px; height: 75px; text-align: center; cursor: grab; user-select: none; touch-action: none; position: relative; flex-shrink: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); overflow: visible; }
+        .pkg-block.in-reserve { background: #FFF; border-color: var(--primary); box-shadow: 0 2px 6px rgba(255,79,154,0.2); }
+        .pkg-block.in-cast { background: var(--primary-light); border-color: transparent; }
+        
+        .pkg-name-top { font-size: 9px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; color: var(--text-sub); }
+        .pkg-name { font-size: 12px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; width: 100%; line-height: 1.2; margin: 2px 0; }
+        .pkg-cost { color: var(--primary); font-weight: bold; margin-top: auto; display: flex; align-items: baseline; justify-content: center; line-height: 1; }
+        .pkg-cost-val { font-size: 20px; font-family: 'Poppins', sans-serif; letter-spacing: -0.5px; }
+        .pkg-cost-unit { font-size: 10px; margin-left: 1px; }
+        
+        .btn-circle-add {
+            width: 44px; height: 44px; border-radius: 50%; border: 1px solid #E0E0E0; background: #fff;
+            color: var(--text-sub); font-size: 24px; font-weight: 300; display: flex; justify-content: center; align-items: center;
+            cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.03); margin: 0 auto;
+        }
+        .btn-circle-add:active { transform: scale(0.92); background: var(--bg); border-color: var(--primary-light); color: var(--primary); }
+        .btn-circle-add:hover { border-color: var(--text-sub); color: var(--text-main); }
+        
+        /* Casts List Styles */
+        .cast-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--primary-light); color: var(--primary); font-size: 20px; font-weight: bold; font-family: 'Poppins', sans-serif; display: flex; justify-content: center; align-items: center; text-transform: uppercase; flex-shrink: 0; }
+        .cast-item-card { border-left: 4px solid var(--primary); overflow: hidden; cursor: grab; touch-action: none; margin-bottom: 16px; background: var(--card-bg); border-radius: 12px; padding: 16px; box-shadow: 0 4px 12px rgba(255, 79, 154, 0.08); transition: box-shadow 0.2s; }
+        .cast-item-card:active { cursor: grabbing; }
+        .btn-icon { background: none; border: none; color: var(--text-sub); padding: 8px; cursor: pointer; border-radius: 50%; transition: background 0.2s, color 0.2s; display: flex; justify-content: center; align-items: center; }
+        .btn-icon:hover { background: var(--bg); }
+        .btn-icon.danger:hover { color: var(--danger); background: #FFEBEE; }
+        .pkg-chip { display: inline-flex; align-items: center; background: #fff; border: 1px solid #E0E0E0; border-radius: 20px; padding: 6px 14px; font-size: 13px; gap: 6px; }
+        .pkg-chip-cost { color: var(--primary); font-weight: bold; font-family: 'Poppins', sans-serif; }
+
+        .cast-pkg-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; background: #fff; border-radius: 8px; padding: 4px; transition: box-shadow 0.2s; }
+        
+        .bank-container { position: absolute; top: 16px; right: 16px; display: flex; align-items: center; gap: 4px; background: #fff; padding: 6px 12px; border-radius: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); font-size: 14px; font-weight: bold; border: 1px solid #eee; z-index: 10; pointer-events: none; }
+
+        .sortable-clone {
+            position: fixed !important; z-index: 9999; pointer-events: none;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.15) !important; transform: scale(1.02);
+            margin: 0 !important; transition: none;
+        }
+        .sortable-placeholder { opacity: 0; pointer-events: none; }
+        
+        .drag-handle { color: var(--text-sub); cursor: grab; padding: 8px; touch-action: none; display: flex; align-items: center; justify-content: center; }
+        .drag-handle:active { cursor: grabbing; color: var(--primary); }
+
+        .modal-input {
+            border: none !important; border-bottom: 2px solid #EEEEEE !important; border-radius: 4px 4px 0 0 !important; background: #FAFAFA !important;
+            padding: 12px !important; font-size: 16px !important; transition: all 0.2s; width: 100%; outline: none; margin: 0 !important; color: var(--text-main);
+        }
+        .modal-input:focus { background: #fff !important; border-bottom-color: var(--primary) !important; box-shadow: 0 4px 6px -4px rgba(255, 79, 154, 0.15) !important; }
+        
+        .modal-title-input {
+            border: none !important; border-bottom: 2px solid #EEEEEE !important; background: transparent !important; padding: 8px 4px !important; font-size: 22px !important; font-weight: bold !important;
+            width: 100%; outline: none; margin-bottom: 32px !important; color: var(--text-main); transition: border-color 0.2s; border-radius: 0 !important;
+        }
+        .modal-title-input:focus { border-bottom-color: var(--primary) !important; }
+        
+        .pkg-badge { position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; background: var(--secondary); color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 12px; font-weight: bold; font-family: 'Poppins', sans-serif; box-shadow: 0 2px 4px rgba(0,0,0,0.1); pointer-events: none; }
+        .dragging-clone { position: fixed; z-index: 9999; pointer-events: none; opacity: 0.95; transform: scale(1.05); box-shadow: 0 10px 24px rgba(0,0,0,0.2); background: var(--card-bg); border: 2px solid var(--primary); }
+        .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .flex-row { display: flex; justify-content: space-between; align-items: center; }
+        .gap-2 { gap: 8px; } .mt-2 { margin-top: 8px; } .mt-4 { margin-top: 16px; } .mb-2 { margin-bottom: 8px; } .mb-4 { margin-bottom: 16px; }
+        .history-item { padding: 12px 0; border-bottom: 1px dashed #E0E0E0; display: flex; justify-content: space-between; align-items: flex-start; }
+        .history-item:last-child { border-bottom: none; }
+        .history-canceled { opacity: 0.5; text-decoration: line-through; }
+        
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal-content { background: var(--card-bg); width: 92%; max-width: 440px; border-radius: 24px; padding: 32px 24px; max-height: 90vh; overflow-y: auto; transform: translateY(20px); transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.1); box-shadow: 0 12px 40px rgba(0,0,0,0.2); }
+        .modal-overlay.active .modal-content { transform: translateY(0); }
+        
+        .snackbar { position: fixed; bottom: calc(80px + var(--safe-bottom)); left: 50%; transform: translateX(-50%) translateY(150px); opacity: 0; pointer-events: none; background: #333; color: white; padding: 12px 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 2000; width: 90%; max-width: 400px; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s; }
+        .snackbar.show { transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: auto; }
+        .snackbar-btn { color: var(--primary-light); background: none; padding: 0; margin-left: 16px; }
+        .banner { padding: 8px 12px; border-radius: 8px; font-weight: bold; font-size: 12px; text-align: center; width: 100%; max-width: 400px; margin-bottom: 8px; }
+        .banner-warn { background: #FFF3E0; color: #E65100; border: 1px solid var(--warn); }
+        
+        /* Dashboard Widgets */
+        .dashboard-widget { margin-bottom: 16px; }
+        .widget-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid #eee; cursor: grab; }
+        .widget-header:active { cursor: grabbing; }
+        .widget-title { font-size: 14px; font-weight: bold; color: var(--text-main); pointer-events: none; margin: 0; }
+        .widget-body { position: relative; width: 100%; min-height: 50px; overflow-x: auto; }
+        
+        .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .summary-card { background: var(--bg); padding: 12px; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .summary-label { font-size: 11px; color: var(--text-sub); margin-bottom: 4px; }
+        .summary-val { font-size: 20px; font-weight: bold; font-family: 'Poppins', sans-serif; line-height: 1; text-align: center; }
+        
+        .svg-chart { width: 100%; height: auto; display: block; overflow: visible; font-family: 'Poppins', sans-serif; }
+        .svg-text { fill: var(--text-sub); font-size: 10px; }
+        .svg-text-main { fill: var(--text-main); font-size: 11px; font-weight: bold; }
+        
+        .ranking-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee; font-size: 13px; }
+        .ranking-row:last-child { border-bottom: none; }
+        .rank-badge { width: 20px; height: 20px; border-radius: 50%; background: var(--gray-light); color: var(--text-sub); display: flex; justify-content: center; align-items: center; font-size: 10px; font-weight: bold; margin-right: 8px; flex-shrink: 0; }
+        .rank-1 { background: #FFD700; color: #fff; }
+        .rank-2 { background: #C0C0C0; color: #fff; }
+        .rank-3 { background: #CD7F32; color: #fff; }
+    </style>
+</head>
+<body>
+    <div id="page-home" class="page container active">
+        <!-- Zone: Consume -->
+        <div id="zone-consume" class="drop-zone">
+            <!-- Bank Icon -->
+            <div class="bank-container">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--text-sub)"><path d="M21 7.28V5c0-1.1-.9-2-2-2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-2.28c.59-.35 1-.98 1-1.72V9c0-.74-.41-1.37-1-1.72zM20 9v6h-7V9h7zM5 19V5h14v2h-6c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h6v2H5z"/><circle cx="16" cy="12" r="1.5"/></svg>
+                <span id="lbl-stock-val" class="num-font text-main" style="margin-left: 2px;">0</span> <span id="lbl-stock-unit" style="font-size:10px; color:var(--text-sub);">C</span>
+            </div>
+            
+            <div id="home-banner-area"></div>
+            <div class="meter-container">
+                <div id="main-meter" class="meter">
+                    <div id="badge-consume" class="meter-badge badge-consume" style="display:none;">0C</div>
+                    <div id="badge-reserve" class="meter-badge badge-reserve" style="display:none;">0C</div>
+                    <div id="badge-free" class="meter-badge badge-free" style="display:none;">0C</div>
+                    <div class="meter-inner">
+                        <div class="meter-title">フリーコイン</div>
+                        <div style="display:flex; align-items:baseline; justify-content:center; gap:2px; margin-top:2px;">
+                            <div class="meter-value num-font" id="lbl-remain-coins" style="margin:0;">0</div>
+                            <div class="meter-unit" id="lbl-main-unit" style="margin:0;">コイン</div>
+                        </div>
+                        <div style="display:flex; align-items:baseline; justify-content:center; gap:2px; margin-top:4px;">
+                            <div class="meter-budget num-font" id="lbl-budget-denominator" style="margin:0;">/ 0</div>
+                            <div class="meter-unit" id="lbl-budget-unit" style="margin:0; opacity:0.6; font-size:clamp(8px, 1.5vh, 10px);">コイン</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Zone: Reserve -->
+        <div id="zone-reserve" class="drop-zone">
+            <div class="zone-title">📌 確保エリア</div>
+            <div id="reserve-blocks-container" class="flex-row-wrap"></div>
+            <div id="reserve-empty-msg" class="empty-reserve">推しのパッケージをここへドラッグ&amp;ドロップで確保</div>
+        </div>
+        <!-- Zone: Casts -->
+        <div id="zone-casts" class="drop-zone">
+            <!-- Dynamically populated -->
+        </div>
+    </div>
+
+    <!-- Pages -->
+    <div id="page-casts" class="page container">
+        <h2 class="mb-4">推し管理</h2>
+        <div id="cast-list"></div>
+    </div>
+    <div id="page-history" class="page container">
+        <h2 class="mb-4">ダッシュボード</h2>
+        
+        <!-- 期間選択バー -->
+        <div class="card" style="padding: 12px; margin-bottom: 16px;">
+            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                <button id="preset-this-month" class="btn-primary" style="flex: 1; padding: 8px 4px; font-size: 12px;" onclick="Dashboard.setPreset('this_month')">今月</button>
+                <button id="preset-last-month" class="btn-outline" style="flex: 1; padding: 8px 4px; font-size: 12px;" onclick="Dashboard.setPreset('last_month')">先月</button>
+                <button id="preset-all" class="btn-outline" style="flex: 1; padding: 8px 4px; font-size: 12px;" onclick="Dashboard.setPreset('all')">全期間</button>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <input type="date" id="date-start" style="margin-bottom: 0; padding: 8px; flex: 1;" onchange="Dashboard.setCustomRange()">
+                <span style="color: var(--text-sub);">〜</span>
+                <input type="date" id="date-end" style="margin-bottom: 0; padding: 8px; flex: 1;" onchange="Dashboard.setCustomRange()">
+            </div>
+        </div>
+
+        <!-- ウィジェットコンテナ -->
+        <div id="dashboard-widgets">
+            <div class="dashboard-widget card" data-widget-id="summary">
+                <div class="widget-header drag-handle"><h3 class="widget-title">サマリー</h3><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="opacity:0.3;"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg></div>
+                <div class="widget-body" id="widget-summary"></div>
+            </div>
+            <div class="dashboard-widget card" data-widget-id="cast-breakdown">
+                <div class="widget-header drag-handle"><h3 class="widget-title">推し別消費</h3><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="opacity:0.3;"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg></div>
+                <div class="widget-body" id="widget-cast-breakdown"></div>
+            </div>
+            <div class="dashboard-widget card" data-widget-id="monthly-trend">
+                <div class="widget-header drag-handle"><h3 class="widget-title">月別推移</h3><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="opacity:0.3;"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg></div>
+                <div class="widget-body" id="widget-monthly-trend" style="padding-top: 10px;"></div>
+            </div>
+            <div class="dashboard-widget card" data-widget-id="package-ranking">
+                <div class="widget-header drag-handle"><h3 class="widget-title">パッケージランキング</h3><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="opacity:0.3;"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg></div>
+                <div class="widget-body" id="widget-package-ranking"></div>
+            </div>
+            <div class="dashboard-widget card" data-widget-id="stock-trend">
+                <div class="widget-header drag-handle"><h3 class="widget-title">貯金推移</h3><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="opacity:0.3;"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg></div>
+                <div class="widget-body" id="widget-stock-trend" style="padding-top: 10px;"></div>
+            </div>
+            <div class="dashboard-widget card" data-widget-id="history-list">
+                <div class="widget-header drag-handle"><h3 class="widget-title">消費履歴</h3><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="opacity:0.3;"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg></div>
+                <div class="widget-body" id="widget-history-list"></div>
+            </div>
+        </div>
+    </div>
+    <div id="page-settings" class="page container">
+        <h2 class="mb-4">設定</h2>
+        <div class="card">
+            <h3>予算・残高設定</h3>
+            <label class="text-sm mt-2" style="display:block;">現在の貯金（ストック）残高</label>
+            <input type="number" id="input-stock" min="0" onchange="App.saveSettings()">
+            <label class="text-sm mt-4" style="display:block;">今月の総予算コイン</label>
+            <input type="number" id="input-budget" min="0" onchange="App.saveSettings()">
+            <label class="text-sm mt-2" style="display:block;">月替わり日（1〜28）</label>
+            <input type="number" id="input-reset-day" min="1" max="28" onchange="App.saveSettings()">
+            <label class="text-sm mt-2" style="display:block;">単位（全角1文字または半角2文字まで）</label>
+            <input type="text" id="input-unit" onchange="App.saveSettings()">
+        </div>
+        <div class="card"><h3>データ管理</h3><button class="btn-primary btn-block mt-4" onclick="App.exportData()">エクスポート (.oshiplan)</button><div class="mt-4" style="position:relative;"><button class="btn-outline btn-block">インポート</button><input type="file" id="import-file" accept=".oshiplan" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" onchange="App.importData(event)"></div></div>
+    </div>
+
+    <!-- Navbar -->
+    <div class="navbar" id="navbar">
+        <div class="nav-item active" data-target="home"><div class="nav-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div><div>ホーム</div></div>
+        <div class="nav-item" data-target="casts"><div class="nav-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div>推し</div></div>
+        <div class="nav-item" data-target="history"><div class="nav-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg></div><div>履歴</div></div>
+        <div class="nav-item" data-target="settings"><div class="nav-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.73 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .43-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.49-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></div><div>設定</div></div>
+    </div>
+
+    <!-- Cast Modal (Refined) -->
+    <div class="modal-overlay" id="cast-modal">
+        <div class="modal-content">
+            <h3 id="cast-modal-title" style="font-weight:normal; font-size: 16px; color: var(--text-sub); margin-bottom: 8px;">推しの追加</h3>
+            <input type="hidden" id="cast-id">
+            <input type="text" id="cast-name" class="modal-title-input" placeholder="推しの名前...">
+            
+            <div id="cast-packages-container"></div>
+            
+            <div style="display: flex; justify-content: center; margin-top: 12px; margin-bottom: 32px;">
+                <button class="btn-circle-add" onclick="App.addPackageToModal()">＋</button>
+            </div>
+            
+            <div class="flex-row" style="gap:16px;">
+                <button class="btn-outline" style="flex:1; padding: 16px; font-size: 16px; font-weight: bold; color: var(--text-main); border-color: #BDBDBD;" onclick="App.closeModal('cast-modal')">キャンセル</button>
+                <button class="btn-primary" style="flex:1; padding: 16px; font-size: 16px; font-weight: bold; background: var(--primary); box-shadow: 0 4px 10px rgba(255, 79, 154, 0.3);" onclick="App.saveCast()">保存</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="confirm-modal"><div class="modal-content text-center" style="padding: 32px 24px;"><h3 id="confirm-title" class="mb-2">確認</h3><p id="confirm-message" class="text-sm mb-4"></p><div class="flex-row gap-2"><button class="btn-outline" style="flex:1;" onclick="App.closeConfirm()">キャンセル</button><button class="btn-primary" style="flex:1;" id="confirm-ok-btn">OK</button></div></div></div>
+    <div class="snackbar" id="snackbar"><span id="snackbar-msg"></span><button class="snackbar-btn" id="snackbar-action">取消</button></div>
+
+<script>
+const uuid = () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8); return v.toString(16); });
+const formatNum = num => Number(num).toLocaleString('ja-JP');
+const formatDateTime = isoStr => { const d = new Date(isoStr); return `${d.getMonth()+1}/${d.getDate()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`; };
+
+const PREFIX = "oshiplan_";
+const State = { settings: { monthlyBudget: 5000, resetDay: 1, unit: '¥' }, casts: [], reservations: [], history: [], months: {}, stock: 0 };
+
+const getByteLength = str => {
+    let count = 0;
+    for (let i = 0; i < str.length; i++) {
+        const c = str.charCodeAt(i);
+        if ((c >= 0x0 && c <= 0x7f) || (c == 0xa5) || (c == 0x203e) || (c >= 0xff61 && c <= 0xff9f)) count += 1;
+        else count += 2;
+    }
+    return count;
+};
+const getUnit = () => State.settings.unit || '¥';
+
+function loadState() { ['settings', 'casts', 'reservations', 'history', 'months', 'stock'].forEach(k => { const data = localStorage.getItem(PREFIX + k); if (data) State[k] = JSON.parse(data); }); }
+function saveState(key) { if(key) localStorage.setItem(PREFIX + key, JSON.stringify(State[key])); else Object.keys(State).forEach(k => localStorage.setItem(PREFIX + k, JSON.stringify(State[k]))); }
+function getMonthKey(date = new Date()) { const d = new Date(date); if (d.getDate() < (parseInt(State.settings.resetDay) || 1)) d.setMonth(d.getMonth() - 1); return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`; }
+function checkMonthReset() { 
+    const mk = getMonthKey(); 
+    if (!State.months[mk]) { 
+        const keys = Object.keys(State.months).sort();
+        if(keys.length > 0) {
+            const lastMonthKey = keys[keys.length - 1];
+            const lastMonth = State.months[lastMonthKey];
+            const consumed = State.history.filter(h => h.monthKey === lastMonthKey && !h.canceled).reduce((sum, h) => sum + h.cost, 0);
+            const remaining = lastMonth.budget - consumed;
+            State.stock = (State.stock || 0) + remaining;
+            lastMonth.stockSnapshot = State.stock;
+        }
+        State.months[mk] = { budget: parseInt(State.settings.monthlyBudget) || 0, createdAt: new Date().toISOString() }; 
+        State.reservations = []; 
+        saveState('months'); saveState('reservations'); saveState('stock');
+    } 
+}
+function getCalculations() {
+    const mk = getMonthKey(); const month = State.months[mk];
+    const budget = month ? month.budget : 0;
+    const consumed = State.history.filter(h => h.monthKey === mk && !h.canceled).reduce((sum, h) => sum + h.cost, 0);
+    const reserved = State.reservations.reduce((sum, r) => { const c = State.casts.find(x => x.id === r.castId); if(!c) return sum; const p = c.packages.find(x => x.id === r.packageId); return sum + (p ? p.cost * r.count : 0); }, 0);
+    const free = budget - consumed;
+    return { budget, consumedCoins: consumed, reservedCoins: reserved, freeCoins: free };
+}
+
+const MeterAnim = {
+    current: { free: 0, reserve: 0, consume: 0, stock: 0 }, target: { free: 0, reserve: 0, consume: 0, stock: 0 }, budget: 1, animId: null,
+    start(free, reserve, consume, stock, budget) {
+        this.target = { free, reserve, consume, stock }; this.budget = budget;
+        if (!this.animId) this.loop();
+    },
+    loop() {
+        const ease = 0.15;
+        this.current.free += (this.target.free - this.current.free) * ease;
+        this.current.reserve += (this.target.reserve - this.current.reserve) * ease;
+        this.current.consume += (this.target.consume - this.current.consume) * ease;
+        this.current.stock += (this.target.stock - this.current.stock) * ease;
+        this.draw();
+        const diff = Math.abs(this.target.free - this.current.free) + Math.abs(this.target.reserve - this.current.reserve) + Math.abs(this.target.consume - this.current.consume) + Math.abs(this.target.stock - this.current.stock);
+        if (diff > 1) { this.animId = requestAnimationFrame(() => this.loop()); } else { this.current = { ...this.target }; this.draw(); this.animId = null; }
+    },
+    draw() {
+        const { free, reserve, consume, stock } = this.current; const total = this.budget || 1;
+        const cDeg = Math.min(360, Math.max(0, (consume / total) * 360));
+        const rDeg = Math.min(360 - cDeg, Math.max(0, (reserve / total) * 360));
+        const crEnd = cDeg + rDeg;
+
+        const meter = document.getElementById('main-meter');
+        meter.style.background = `conic-gradient(var(--gray-light) 0deg ${cDeg}deg, var(--primary-mid) ${cDeg}deg ${crEnd}deg, var(--primary) ${crEnd}deg 360deg)`;
+        
+        const lblRemain = document.getElementById('lbl-remain-coins');
+        lblRemain.innerText = formatNum(Math.round(free));
+        lblRemain.style.color = free < 0 ? 'var(--danger)' : 'var(--text-main)';
+        
+        const stockLbl = document.getElementById('lbl-stock-val');
+        stockLbl.innerText = formatNum(Math.round(stock));
+        stockLbl.style.color = stock < 0 ? 'var(--danger)' : 'var(--text-main)';
+        
+        document.getElementById('lbl-budget-denominator').innerText = `/ ${formatNum(total)}`;
+        const u = getUnit();
+        document.getElementById('lbl-main-unit').innerText = u === 'C' ? 'コイン' : u;
+        document.getElementById('lbl-budget-unit').innerText = u === 'C' ? 'コイン' : u;
+        document.getElementById('lbl-stock-unit').innerText = u;
+        const positionBadge = (id, startDeg, endDeg, value) => {
+            const badge = document.getElementById(id);
+            const roundedVal = Math.round(value);
+            if(roundedVal <= 0) {
+                badge.style.opacity = '0'; setTimeout(() => { if(badge.style.opacity === '0') badge.style.display = 'none'; }, 200); return;
+            }
+            badge.style.display = 'flex'; requestAnimationFrame(() => badge.style.opacity = '1'); badge.innerText = formatNum(roundedVal) + u;
+            const midDeg = startDeg + (endDeg - startDeg) / 2; const rad = (midDeg - 90) * Math.PI / 180;
+            const r = 50; const x = 50 + Math.cos(rad) * r; const y = 50 + Math.sin(rad) * r;
+            badge.style.left = `${x}%`; badge.style.top = `${y}%`;
+        };
+        positionBadge('badge-consume', 0, cDeg, consume); positionBadge('badge-reserve', cDeg, cDeg + rDeg, reserve);
+    }
+};
+
+const App = {
+    modalSortable: null,
+    castsSortable: null,
+    currentTab: 'home',
+    init() {
+        loadState(); checkMonthReset(); this.setupRouter(); this.renderAll();
+        DragDropManager.init();
+        if(typeof Dashboard !== 'undefined') Dashboard.init();
+    },
+    setupRouter() { document.querySelectorAll('.nav-item').forEach(el => el.addEventListener('click', e => this.navigate(e.currentTarget.dataset.target))); },
+    navigate(target) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(`page-${target}`).classList.add('active'); document.querySelector(`.nav-item[data-target="${target}"]`).classList.add('active');
+        this.currentTab = target; this.renderAll();
+    },
+    renderAll() { if(this.currentTab === 'home') this.renderHome(); if(this.currentTab === 'casts') this.renderCastsList(); if(this.currentTab === 'history') this.renderHistory(true); if(this.currentTab === 'settings') this.renderSettings(); },
+    
+    renderHome() {
+        const calc = getCalculations();
+        const currentStock = (State.stock || 0) - Math.max(0, calc.consumedCoins - calc.budget);
+        
+        MeterAnim.start(calc.freeCoins, calc.reservedCoins, calc.consumedCoins, currentStock, calc.budget);
+        const bannerArea = document.getElementById('home-banner-area'); bannerArea.innerHTML = calc.reservedCoins > calc.budget ? `<div class="banner banner-warn">⚠ 確保分が予算をオーバーしています！</div>` : '';
+        const reserveCont = document.getElementById('reserve-blocks-container'); const emptyMsg = document.getElementById('reserve-empty-msg');
+        reserveCont.innerHTML = ''; let hasReserve = false;
+        State.reservations.forEach(res => {
+            if(res.count <= 0) return; const cast = State.casts.find(c => c.id === res.castId); if(!cast) return; const pkg = cast.packages.find(p => p.id === res.packageId); if(!pkg) return;
+            for(let i=0; i<res.count; i++) {
+                hasReserve = true; const block = document.createElement('div'); block.className = 'pkg-block in-reserve draggable'; block.dataset.castId = cast.id; block.dataset.packageId = pkg.id; block.dataset.source = 'reserve';
+                block.innerHTML = `<div class="pkg-name-top">${cast.name}</div><div class="pkg-name">${pkg.label}</div><div class="pkg-cost"><span class="pkg-cost-val">${formatNum(pkg.cost)}</span><span class="pkg-cost-unit">${getUnit()}</span></div>`; reserveCont.appendChild(block);
+            }
+        });
+        emptyMsg.style.display = hasReserve ? 'none' : 'block';
+        const castsCont = document.getElementById('zone-casts'); castsCont.innerHTML = '';
+        State.casts.forEach(cast => {
+            const card = document.createElement('div'); card.className = 'cast-card'; card.innerHTML = `<h4 style="font-size:14px; text-align:center; padding-bottom:8px; border-bottom:1px solid #eee;">${cast.name}</h4>`;
+            const blocksCont = document.createElement('div'); blocksCont.className = 'cast-blocks-container';
+            cast.packages.forEach(pkg => {
+                const block = document.createElement('div'); block.className = 'pkg-block in-cast draggable'; block.dataset.castId = cast.id; block.dataset.packageId = pkg.id; block.dataset.source = 'cast';
+                const times = calc.freeCoins > 0 ? Math.floor(calc.freeCoins / pkg.cost) : 0; const badgeHtml = times > 0 ? `<div class="pkg-badge">${times}</div>` : '';
+                block.innerHTML = `${badgeHtml}<div class="pkg-name">${pkg.label}</div><div class="pkg-cost"><span class="pkg-cost-val">${formatNum(pkg.cost)}</span><span class="pkg-cost-unit">${getUnit()}</span></div>`; blocksCont.appendChild(block);
+            });
+            card.appendChild(blocksCont); castsCont.appendChild(card);
+        });
+        DragDropManager.attachEvents();
+    },
+
+    renderCastsList() {
+        const list = document.getElementById('cast-list');
+        if(State.casts.length === 0) { 
+            list.innerHTML = '<p class="text-center text-sm" style="color:#ccc; padding:20px;">推しが登録されていません</p>';
+        } else {
+            let html = ''; 
+            State.casts.forEach(cast => {
+                const initial = cast.name.charAt(0);
+                let pkgsHtml = '';
+                cast.packages.forEach(pkg => { 
+                    pkgsHtml += `<div class="pkg-chip"><span>${pkg.label}</span><span class="pkg-chip-cost">${formatNum(pkg.cost)}<span style="font-size:10px; margin-left:2px;">${getUnit()}</span></span></div>`;
+                });
+                
+                html += `
+                <div class="cast-item-card" data-id="${cast.id}">
+                    <div class="flex-row" style="margin-bottom: 16px; align-items: center;">
+                        <div style="display:flex; align-items:center; gap: 12px; pointer-events: none;">
+                            <div class="cast-avatar">${initial}</div>
+                            <h3 style="font-size:18px;">${cast.name}</h3>
+                        </div>
+                        <div style="display:flex; gap: 4px;">
+                            <button class="btn-icon" onclick="App.editCast('${cast.id}')" aria-label="編集">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                            </button>
+                            <button class="btn-icon danger" onclick="App.deleteCast('${cast.id}')" aria-label="削除">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px; pointer-events: none;">
+                        ${pkgsHtml}
+                    </div>
+                </div>`;
+            });
+            list.innerHTML = html;
+        }
+        
+        list.innerHTML += `
+            <button class="btn-block" style="margin-top: 16px; padding: 16px; border: 2px dashed #E0E0E0; background: transparent; color: var(--text-sub); border-radius: 12px; font-size: 14px;" onclick="App.openCastModal()">
+                ＋ 新しい推しを追加
+            </button>
+        `;
+        
+        if(this.castsSortable) this.castsSortable.destroy();
+        this.castsSortable = new SortableList({
+            container: '#cast-list', itemSelector: '.cast-item-card', handleSelector: '.cast-item-card', ignoreSelector: 'button',
+            onUpdate: (container) => {
+                const newCasts = [];
+                container.querySelectorAll('.cast-item-card').forEach(card => {
+                    const id = card.dataset.id; const cast = State.casts.find(c => c.id === id); if(cast) newCasts.push(cast);
+                });
+                if(newCasts.length === State.casts.length) { State.casts = newCasts; saveState('casts'); this.renderAll(); }
+            }
+        });
+    },
+    renderHistory() {
+        if(typeof Dashboard !== 'undefined') Dashboard.renderAll();
+    },
+    renderSettings() { document.getElementById('input-budget').value = State.settings.monthlyBudget; document.getElementById('input-reset-day').value = State.settings.resetDay; document.getElementById('input-stock').value = State.stock || 0; document.getElementById('input-unit').value = getUnit(); },
+    saveSettings() { State.settings.monthlyBudget = parseInt(document.getElementById('input-budget').value) || 0; State.settings.resetDay = Math.min(28, Math.max(1, parseInt(document.getElementById('input-reset-day').value) || 1)); State.stock = parseInt(document.getElementById('input-stock').value) || 0; let u = document.getElementById('input-unit').value.trim(); if(u) { if(getByteLength(u) > 2) { alert('単位は全角1文字または半角2文字までにしてください'); u = getUnit(); document.getElementById('input-unit').value = u; return; } State.settings.unit = u; } else { State.settings.unit = '¥'; } const mk = getMonthKey(); if(State.months[mk]) State.months[mk].budget = State.settings.monthlyBudget; saveState('settings'); saveState('months'); saveState('stock'); checkMonthReset(); this.renderAll(); },
+
+    processDrop(castId, packageId, source, dropZoneId) {
+        if(dropZoneId === 'zone-consume') { this.consume(castId, packageId, source === 'reserve'); } 
+        else if (dropZoneId === 'zone-reserve') { if(source === 'cast') this.changeReservation(castId, packageId, 1); } 
+        else if (dropZoneId === 'zone-casts') { if(source === 'reserve') this.changeReservation(castId, packageId, -1); }
+        this.renderHome();
+    },
+    changeReservation(castId, packageId, delta) {
+        let res = State.reservations.find(r => r.castId === castId && r.packageId === packageId);
+        if(!res) { if(delta < 0) return; res = { castId, packageId, count: 0 }; State.reservations.push(res); }
+        res.count = Math.max(0, res.count + delta); saveState('reservations');
+    },
+    consume(castId, packageId, isFromReserve) {
+        const cast = State.casts.find(c => c.id === castId); const pkg = cast.packages.find(p => p.id === packageId);
+        const execute = () => {
+            if(isFromReserve) { let res = State.reservations.find(r => r.castId === castId && r.packageId === packageId); if(res && res.count > 0) res.count -= 1; saveState('reservations'); }
+            const hist = { id: uuid(), castId, packageId, castName: cast.name, packageLabel: pkg.label, cost: pkg.cost, timestamp: new Date().toISOString(), monthKey: getMonthKey(), canceled: false };
+            State.history.push(hist); saveState('history'); this.renderAll(); this.showSnackbar(`${pkg.label} を消費しました`, () => this.cancelHistory(hist.id));
+        };
+        execute();
+    },
+    cancelHistory(historyId) { const h = State.history.find(x => x.id === historyId); if(!h || h.canceled) return; h.canceled = true; saveState('history'); this.renderAll(); this.showSnackbar('消費を取り消しました'); },
+
+    // Modal
+    openCastModal(castId = null) {
+        document.getElementById('cast-id').value = castId || ''; document.getElementById('cast-name').value = ''; document.getElementById('cast-packages-container').innerHTML = '';
+        if(castId) {
+            document.getElementById('cast-modal-title').innerText = '推しの編集';
+            const cast = State.casts.find(c => c.id === castId); document.getElementById('cast-name').value = cast.name;
+            cast.packages.forEach(p => this.addPackageToModal(p));
+        } else {
+            document.getElementById('cast-modal-title').innerText = '推しの追加'; this.addPackageToModal(); 
+        }
+        document.getElementById('cast-modal').classList.add('active');
+        
+        if(this.modalSortable) this.modalSortable.destroy();
+        this.modalSortable = new SortableList({ container: '#cast-packages-container', itemSelector: '.cast-pkg-row', handleSelector: '.drag-handle' });
+    },
+    addPackageToModal(pkg = {id: uuid(), label: '', cost: ''}) {
+        const cont = document.getElementById('cast-packages-container'); const div = document.createElement('div');
+        div.className = 'cast-pkg-row';
+        div.innerHTML = `
+            <input type="hidden" class="pkg-id" value="${pkg.id}">
+            <div class="drag-handle"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg></div>
+            <input type="text" class="modal-input pkg-label" style="flex:1; min-width: 0;" placeholder="パッケージ名..." value="${pkg.label}">
+            <div style="position: relative; width: 90px;">
+                <input type="number" class="modal-input pkg-cost num-font" style="width: 100%; text-align: left; padding-right: 28px !important;" placeholder="" value="${pkg.cost}">
+                <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text-sub); font-size: 14px; pointer-events: none; font-weight: bold;">${getUnit()}</span>
+            </div>
+            <div style="cursor: pointer; padding: 12px; color: var(--text-sub); transition: color 0.2s;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--text-sub)'" onclick="this.parentElement.remove()"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></div>
+        `;
+        cont.appendChild(div);
+    },
+    saveCast() {
+        const id = document.getElementById('cast-id').value; const name = document.getElementById('cast-name').value.trim();
+        if(!name) return alert('推しの名前を入力');
+        const pkgs = [];
+        document.querySelectorAll('.cast-pkg-row').forEach(row => {
+            const pid = row.querySelector('.pkg-id').value; const label = row.querySelector('.pkg-label').value.trim(); const cost = parseInt(row.querySelector('.pkg-cost').value);
+            if(label && !isNaN(cost)) pkgs.push({ id: pid, label, cost });
+        });
+        if(pkgs.length === 0) return alert('1つ以上のパッケージが必要');
+        if(id) {
+            const cast = State.casts.find(c => c.id === id);
+            if(cast.name !== name) { State.history.filter(h => h.castId === id).forEach(h => h.castName = name); saveState('history'); }
+            cast.name = name; cast.packages = pkgs;
+        } else { State.casts.push({ id: uuid(), name, packages: pkgs }); }
+        saveState('casts'); this.closeModal('cast-modal'); this.renderAll();
+    },
+    deleteCast(castId) { this.confirm('削除しますか？(履歴は残ります)', () => { State.casts = State.casts.filter(c => c.id !== castId); State.reservations = State.reservations.filter(r => r.castId !== castId); saveState('casts'); saveState('reservations'); this.renderAll(); }); },
+    editCast(castId) { this.openCastModal(castId); },
+    closeModal(id) { document.getElementById(id).classList.remove('active'); },
+    confirm(msg, onOk) { document.getElementById('confirm-message').innerText = msg; document.getElementById('confirm-modal').classList.add('active'); document.getElementById('confirm-ok-btn').onclick = () => { this.closeConfirm(); if(onOk) onOk(); }; },
+    closeConfirm() { document.getElementById('confirm-modal').classList.remove('active'); },
+    snackbarTimeout: null,
+    showSnackbar(msg, onAction = null) {
+        const sb = document.getElementById('snackbar'); document.getElementById('snackbar-msg').innerText = msg; const actionBtn = document.getElementById('snackbar-action');
+        if(onAction) { actionBtn.style.display = 'block'; actionBtn.onclick = () => { onAction(); sb.classList.remove('show'); }; } else { actionBtn.style.display = 'none'; }
+        sb.classList.add('show'); if(this.snackbarTimeout) clearTimeout(this.snackbarTimeout); this.snackbarTimeout = setTimeout(() => sb.classList.remove('show'), 4000);
+    },
+    exportData() {
+        const a = document.createElement('a'); const d = new Date(); const df = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+        a.href = URL.createObjectURL(new Blob([JSON.stringify(State, null, 2)], { type: "application/json" })); a.download = `oshiplan_backup_${df}.oshiplan`; a.click();
+    },
+    importData(e) {
+        const file = e.target.files[0]; if(!file) return;
+        this.confirm('現在のデータは上書きされます。よろしいですか？', () => {
+            const reader = new FileReader(); reader.onload = ev => { try { const data = JSON.parse(ev.target.result); if(data.settings && data.casts) { Object.keys(data).forEach(k => State[k] = data[k]); saveState(); alert('完了'); location.reload(); } else alert('不正なファイル'); } catch(err) { alert('失敗しました'); } }; reader.readAsText(file);
+        }); e.target.value = '';
+    }
+};
+
+const DragDropManager = {
+    isDragging: false, dragEl: null, cloneEl: null, offsetX: 0, offsetY: 0, currentDropZone: null,
+    init() { document.addEventListener('pointermove', this.onMove.bind(this), {passive: false}); document.addEventListener('pointerup', this.onUp.bind(this)); document.addEventListener('pointercancel', this.onUp.bind(this)); },
+    attachEvents() { document.querySelectorAll('.draggable').forEach(el => { el.addEventListener('pointerdown', this.onDown.bind(this)); }); },
+    onDown(e) {
+        if(e.button !== 0 && e.pointerType === 'mouse') return;
+        const el = e.currentTarget; const rect = el.getBoundingClientRect();
+        this.isDragging = true; this.dragEl = el; this.offsetX = e.clientX - rect.left; this.offsetY = e.clientY - rect.top;
+        this.cloneEl = el.cloneNode(true); this.cloneEl.classList.add('dragging-clone');
+        this.cloneEl.style.width = rect.width + 'px'; this.cloneEl.style.height = rect.height + 'px'; this.cloneEl.style.left = rect.left + 'px'; this.cloneEl.style.top = rect.top + 'px';
+        document.body.appendChild(this.cloneEl);
+        el.style.opacity = '0.3'; if(e.pointerType === 'touch') e.preventDefault();
+    },
+    onMove(e) {
+        if(!this.isDragging || !this.cloneEl) return; e.preventDefault();
+        const x = e.clientX - this.offsetX; const y = e.clientY - this.offsetY; this.cloneEl.style.left = x + 'px'; this.cloneEl.style.top = y + 'px';
+        const elemBelow = document.elementFromPoint(e.clientX, e.clientY); const dropZone = elemBelow ? elemBelow.closest('.drop-zone') : null;
+        if(this.currentDropZone !== dropZone) {
+            if(this.currentDropZone) this.currentDropZone.classList.remove('drag-over', 'drag-over-danger');
+            this.currentDropZone = dropZone;
+            if(this.currentDropZone) {
+                const zoneId = this.currentDropZone.id; const source = this.dragEl.dataset.source;
+                if(zoneId === 'zone-consume') this.currentDropZone.classList.add('drag-over');
+                if(zoneId === 'zone-reserve' && source === 'cast') this.currentDropZone.classList.add('drag-over');
+                if(zoneId === 'zone-casts' && source === 'reserve') this.currentDropZone.classList.add('drag-over-danger');
+            }
+        }
+    },
+    onUp(e) {
+        if(!this.isDragging) return;
+        const castId = this.dragEl.dataset.castId; const packageId = this.dragEl.dataset.packageId; const source = this.dragEl.dataset.source; const dropZoneId = this.currentDropZone ? this.currentDropZone.id : null;
+        this.isDragging = false; if(this.cloneEl) this.cloneEl.remove(); this.cloneEl = null; if(this.dragEl) this.dragEl.style.opacity = '1'; this.dragEl = null;
+        if(this.currentDropZone) { this.currentDropZone.classList.remove('drag-over', 'drag-over-danger'); this.currentDropZone = null; }
+        App.processDrop(castId, packageId, source, dropZoneId);
+    }
+};
+
+class SortableList {
+    constructor(options) {
+        this.container = typeof options.container === 'string' ? document.querySelector(options.container) : options.container;
+        if(!this.container) return;
+        this.itemSelector = options.itemSelector; this.handleSelector = options.handleSelector || options.itemSelector;
+        this.ignoreSelector = options.ignoreSelector || ''; this.onUpdate = options.onUpdate || null;
+        this.dragEl = null; this.cloneEl = null; this.offsetY = 0;
+        this.onDown = this.onDown.bind(this); this.onMove = this.onMove.bind(this); this.onUp = this.onUp.bind(this);
+        this.container.addEventListener('pointerdown', this.onDown, {passive: false});
+    }
+    onDown(e) {
+        if(e.button !== 0 && e.pointerType === 'mouse') return;
+        if(this.ignoreSelector && e.target.closest(this.ignoreSelector)) return;
+        const handle = e.target.closest(this.handleSelector); if(!handle) return;
+        const item = handle.closest(this.itemSelector); if(!item) return;
+        if(!this.container.contains(item)) return;
+        
+        e.preventDefault(); const rect = item.getBoundingClientRect();
+        this.dragEl = item; this.offsetY = e.clientY - rect.top;
+        this.cloneEl = item.cloneNode(true); this.cloneEl.classList.add('sortable-clone');
+        this.cloneEl.style.width = rect.width + 'px'; this.cloneEl.style.height = rect.height + 'px';
+        this.cloneEl.style.left = rect.left + 'px'; this.cloneEl.style.top = rect.top + 'px';
+        document.body.appendChild(this.cloneEl);
+        
+        this.dragEl.classList.add('sortable-placeholder'); document.body.style.userSelect = 'none';
+        document.addEventListener('pointermove', this.onMove, {passive: false});
+        document.addEventListener('pointerup', this.onUp); document.addEventListener('pointercancel', this.onUp);
+    }
+    onMove(e) {
+        if(!this.dragEl || !this.cloneEl) return; e.preventDefault();
+        const y = e.clientY - this.offsetY; this.cloneEl.style.top = y + 'px';
+        const items = [...this.container.querySelectorAll(this.itemSelector)];
+        const currentIdx = items.indexOf(this.dragEl);
+        let targetIdx = currentIdx; const pointerY = e.clientY;
+        items.forEach((item, idx) => {
+            if(item === this.dragEl) return;
+            const rect = item.getBoundingClientRect(); const mid = rect.top + rect.height / 2;
+            if(idx < currentIdx && pointerY < mid) targetIdx = Math.min(targetIdx, idx);
+            if(idx > currentIdx && pointerY > mid) targetIdx = Math.max(targetIdx, idx);
+        });
+        if(targetIdx !== currentIdx) {
+            const beforeRects = new Map(); items.forEach(item => beforeRects.set(item, item.getBoundingClientRect()));
+            const targetEl = items[targetIdx];
+            if(targetIdx > currentIdx) this.container.insertBefore(this.dragEl, targetEl.nextSibling);
+            else this.container.insertBefore(this.dragEl, targetEl);
+            items.forEach(item => {
+                if(item === this.dragEl) return;
+                const before = beforeRects.get(item); const after = item.getBoundingClientRect();
+                if(before.top !== after.top) {
+                    const deltaY = before.top - after.top;
+                    item.style.transition = 'none'; item.style.transform = `translateY(${deltaY}px)`;
+                    requestAnimationFrame(() => { item.style.transition = 'transform 0.25s cubic-bezier(0.2, 1, 0.2, 1)'; item.style.transform = 'translateY(0)'; });
+                }
+            });
+        }
+    }
+    onUp(e) {
+        if(!this.dragEl) return;
+        document.removeEventListener('pointermove', this.onMove); document.removeEventListener('pointerup', this.onUp); document.removeEventListener('pointercancel', this.onUp);
+        const rect = this.dragEl.getBoundingClientRect();
+        this.cloneEl.style.transition = 'top 0.2s, left 0.2s, transform 0.2s, box-shadow 0.2s';
+        this.cloneEl.style.top = rect.top + 'px'; this.cloneEl.style.left = rect.left + 'px';
+        this.cloneEl.style.transform = 'scale(1)'; this.cloneEl.style.boxShadow = 'none';
+        const dragEl = this.dragEl; const cloneEl = this.cloneEl;
+        this.dragEl = null; this.cloneEl = null;
+        setTimeout(() => {
+            dragEl.classList.remove('sortable-placeholder'); cloneEl.remove(); document.body.style.userSelect = '';
+            [...this.container.querySelectorAll(this.itemSelector)].forEach(el => { el.style.transform = ''; el.style.transition = ''; });
+            if(this.onUpdate) this.onUpdate(this.container);
+        }, 200);
+    }
+    destroy() { if(this.container) this.container.removeEventListener('pointerdown', this.onDown); }
+}
+
+const Dashboard = {
+    sortable: null, startDate: null, endDate: null,
+    init() {
+        this.setPreset('this_month');
+        this.loadWidgetOrder();
+        if(this.sortable) this.sortable.destroy();
+        this.sortable = new SortableList({ container: '#dashboard-widgets', itemSelector: '.dashboard-widget', handleSelector: '.drag-handle', onUpdate: () => this.saveWidgetOrder() });
+    },
+    saveWidgetOrder() {
+        const order = [...document.querySelectorAll('.dashboard-widget')].map(w => w.dataset.widgetId);
+        localStorage.setItem(PREFIX + 'widgetOrder', JSON.stringify(order));
+    },
+    loadWidgetOrder() {
+        const saved = localStorage.getItem(PREFIX + 'widgetOrder');
+        if(!saved) return;
+        try {
+            const order = JSON.parse(saved); const container = document.getElementById('dashboard-widgets');
+            order.reverse().forEach(id => { const w = container.querySelector(`[data-widget-id="${id}"]`); if(w) container.prepend(w); });
+        } catch(e) {}
+    },
+    setPreset(type) {
+        document.querySelectorAll('#preset-this-month, #preset-last-month, #preset-all').forEach(b => { b.classList.remove('btn-primary'); b.classList.add('btn-outline'); });
+        const resetDay = parseInt(State.settings.resetDay) || 1;
+        const now = new Date(); if(now.getDate() < resetDay) now.setMonth(now.getMonth() - 1);
+        let s = null, e = null;
+        if (type === 'this_month') {
+            document.getElementById('preset-this-month').className = 'btn-primary';
+            s = new Date(now.getFullYear(), now.getMonth(), resetDay); e = new Date(now.getFullYear(), now.getMonth() + 1, resetDay - 1);
+        } else if (type === 'last_month') {
+            document.getElementById('preset-last-month').className = 'btn-primary';
+            s = new Date(now.getFullYear(), now.getMonth() - 1, resetDay); e = new Date(now.getFullYear(), now.getMonth(), resetDay - 1);
+        } else if (type === 'all') { document.getElementById('preset-all').className = 'btn-primary'; }
+        
+        this.startDate = s; this.endDate = e;
+        const formatForInput = d => d ? `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}` : '';
+        document.getElementById('date-start').value = formatForInput(s); document.getElementById('date-end').value = formatForInput(e);
+        this.renderAll();
+    },
+    setCustomRange() {
+        document.querySelectorAll('#preset-this-month, #preset-last-month, #preset-all').forEach(b => { b.classList.remove('btn-primary'); b.classList.add('btn-outline'); });
+        const sVal = document.getElementById('date-start').value; const eVal = document.getElementById('date-end').value;
+        this.startDate = sVal ? new Date(sVal) : null; this.endDate = eVal ? new Date(eVal) : null;
+        this.renderAll();
+    },
+    getFilteredHistory() {
+        return State.history.filter(h => {
+            if(h.canceled) return false;
+            const d = new Date(h.timestamp);
+            if(this.startDate && d < this.startDate) return false;
+            if(this.endDate) { const e = new Date(this.endDate); e.setHours(23, 59, 59, 999); if(d > e) return false; }
+            return true;
+        });
+    },
+    isSingleMonth() {
+        if(!this.startDate || !this.endDate) return false;
+        const diffDays = (this.endDate - this.startDate) / (1000 * 60 * 60 * 24);
+        return diffDays >= 27 && diffDays <= 32;
+    },
+    renderAll() {
+        this.renderSummary(); this.renderCastBreakdown(); this.renderMonthlyTrend();
+        this.renderPackageRanking(); this.renderStockTrend(); this.renderHistoryList();
+    },
+    renderSummary() {
+        const h = this.getFilteredHistory(); const totalConsumed = h.reduce((sum, item) => sum + item.cost, 0);
+        let html = '';
+        if(this.isSingleMonth()) {
+            const mk = getMonthKey(this.startDate);
+            const budget = State.months[mk] ? State.months[mk].budget : (parseInt(State.settings.monthlyBudget) || 0);
+            const free = budget - totalConsumed; const freeColor = free < 0 ? 'var(--danger)' : 'var(--primary)';
+            const currentStock = (State.stock || 0) - Math.max(0, totalConsumed - budget);
+            const u = getUnit();
+            html = `<div class="summary-grid">
+                <div class="summary-card"><div class="summary-label">予算</div><div class="summary-val" style="color:var(--primary);">${formatNum(budget)} ${u}</div></div>
+                <div class="summary-card"><div class="summary-label">消費</div><div class="summary-val" style="color:var(--text-sub);">${formatNum(totalConsumed)} ${u}</div></div>
+                <div class="summary-card"><div class="summary-label">フリーコイン</div><div class="summary-val" style="color:${freeColor};">${formatNum(free)} ${u}</div></div>
+                <div class="summary-card"><div class="summary-label">貯金残高</div><div class="summary-val" style="color:var(--text-sub);">${formatNum(currentStock)} ${u}</div></div>
+            </div>`;
+        } else {
+            let monthsCount = 1;
+            if(this.startDate && this.endDate) monthsCount = Math.max(1, Math.round((this.endDate - this.startDate) / (1000 * 60 * 60 * 24 * 30)));
+            else { const keys = Object.keys(State.months); monthsCount = keys.length > 0 ? keys.length : 1; }
+            const avg = Math.round(totalConsumed / monthsCount);
+            const u = getUnit();
+            html = `<div class="summary-grid">
+                <div class="summary-card"><div class="summary-label">総消費</div><div class="summary-val" style="color:var(--primary);">${formatNum(totalConsumed)} ${u}</div></div>
+                <div class="summary-card"><div class="summary-label">月平均消費</div><div class="summary-val" style="color:var(--text-sub);">${formatNum(avg)} ${u}</div></div>
+                <div class="summary-card"><div class="summary-label">消費回数</div><div class="summary-val" style="color:var(--text-main);">${h.length} 回</div></div>
+                <div class="summary-card"><div class="summary-label">貯金残高</div><div class="summary-val" style="color:var(--text-sub);">${formatNum(State.stock || 0)} ${u}</div></div>
+            </div>`;
+        }
+        document.getElementById('widget-summary').innerHTML = html;
+    },
+    renderCastBreakdown() {
+        const h = this.getFilteredHistory(); const map = {}; h.forEach(x => { map[x.castName] = (map[x.castName] || 0) + x.cost; });
+        const list = Object.keys(map).map(k => ({ name: k, val: map[k] })).sort((a,b) => b.val - a.val);
+        if(list.length === 0) { document.getElementById('widget-cast-breakdown').innerHTML = '<div class="text-center text-sm" style="padding: 20px;">データがありません</div>'; return; }
+        const max = list[0].val;
+        let html = '<div style="display:flex; flex-direction:column; gap:12px; padding: 12px 0;">';
+        list.forEach((item, i) => {
+            const w = Math.max(2, (item.val / max) * 100); const hue = (i * (360 / list.length)) % 360;
+            html += `<div style="display:flex; align-items:center;">
+                <div style="width:100px; font-size:12px; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--text-main);">${item.name}</div>
+                <div style="flex:1; height:12px; background:var(--gray-light); border-radius:6px; margin: 0 12px;">
+                    <div style="width:${w}%; height:100%; background:hsl(${hue}, 70%, 65%); border-radius:6px;"></div>
+                </div>
+                <div style="width:40px; text-align:right; font-size:11px; font-weight:bold; color:var(--primary); font-family:'Poppins', sans-serif;">${formatNum(item.val)}</div>
+            </div>`;
+        });
+        html += '</div>';
+        document.getElementById('widget-cast-breakdown').innerHTML = html;
+    },
+    renderMonthlyTrend() {
+        const h = this.getFilteredHistory();
+        if(h.length === 0) { document.getElementById('widget-monthly-trend').innerHTML = '<div class="text-center text-sm" style="padding: 20px;">データがありません</div>'; return; }
+        const map = {}; h.forEach(x => { map[x.monthKey] = (map[x.monthKey] || 0) + x.cost; });
+        let keys = Object.keys(map).sort(); if(keys.length > 12) keys = keys.slice(-12);
+        const values = keys.map(k => map[k]); const maxVal = Math.max(...values, 1000);
+        let html = '<div style="display:flex; justify-content:space-around; align-items:flex-end; height:140px; padding: 12px 0;">';
+        keys.forEach((k, i) => {
+            const val = map[k]; const barH = Math.max(1, (val / maxVal) * 90);
+            const budget = State.months[k] ? State.months[k].budget : 0; const bY = (budget / maxVal) * 90;
+            html += `<div style="display:flex; flex-direction:column; align-items:center; flex:1; position:relative;">`;
+            if(budget > 0 && bY <= 110) html += `<div style="position:absolute; bottom:${bY + 20}px; left:5%; right:5%; border-top:1px dashed var(--danger); z-index:0;"></div>`;
+            html += `<div style="font-size:10px; color:var(--text-sub); margin-bottom:4px; z-index:1;">${formatNum(val)}</div>
+                <div style="width:min(100%, 20px); height:${barH}px; background:var(--primary-mid); border-radius:2px 2px 0 0; z-index:1;"></div>
+                <div style="font-size:10px; color:var(--text-sub); margin-top:4px; z-index:1;">${k.split('-')[1]}月</div>
+            </div>`;
+        });
+        html += '</div>';
+        document.getElementById('widget-monthly-trend').innerHTML = html;
+    },
+    renderPackageRanking() {
+        const h = this.getFilteredHistory(); const map = {}; 
+        h.forEach(x => { const key = x.castName + '|' + x.packageLabel; if(!map[key]) map[key] = { cast: x.castName, pkg: x.packageLabel, count: 0, cost: 0 }; map[key].count++; map[key].cost += x.cost; });
+        const list = Object.values(map).sort((a,b) => b.cost - a.cost).slice(0, 5);
+        if(list.length === 0) { document.getElementById('widget-package-ranking').innerHTML = '<div class="text-center text-sm" style="padding: 20px;">データがありません</div>'; return; }
+        let html = '';
+        list.forEach((item, i) => {
+            const rClass = i < 3 ? `rank-${i+1}` : '';
+            html += `<div class="ranking-row">
+                <div style="display:flex; align-items:center;"><div class="rank-badge ${rClass}">${i+1}</div> 
+                <div><div style="font-weight:bold;">${item.pkg}</div><div style="font-size:10px; color:var(--text-sub);">${item.cast}</div></div></div>
+                <div style="text-align:right;"><div style="font-weight:bold; color:var(--primary); font-family:'Poppins', sans-serif;">${formatNum(item.cost)} ${getUnit()}</div>
+                <div style="font-size:10px; color:var(--text-sub);">${item.count} 回</div></div>
+            </div>`;
+        });
+        document.getElementById('widget-package-ranking').innerHTML = html;
+    },
+    renderStockTrend() {
+        const keys = Object.keys(State.months).sort();
+        const filteredKeys = keys.filter(k => {
+            if(!this.startDate && !this.endDate) return true;
+            const [y, m] = k.split('-'); const d = new Date(parseInt(y), parseInt(m)-1, 15);
+            if(this.startDate && d < this.startDate) return false;
+            if(this.endDate && d > this.endDate) return false;
+            return true;
+        });
+        const validKeys = filteredKeys.filter(k => State.months[k].stockSnapshot !== undefined);
+        if(validKeys.length === 0) { document.getElementById('widget-stock-trend').innerHTML = '<div class="text-center text-sm" style="padding: 20px;">過去の貯金データがありません<br><span style="font-size:10px; opacity:0.7;">(次月のリセット時から記録されます)</span></div>'; return; }
+        const values = validKeys.map(k => State.months[k].stockSnapshot);
+        const minVal = Math.min(0, ...values); const maxVal = Math.max(...values, 100);
+        let html = '<div style="position:relative; height:140px; padding: 20px 10px;">';
+        let svg = ''; const range = maxVal - minVal || 1;
+        if (minVal < 0) {
+            const zeroY = 100 - ((0 - minVal) / range) * 100;
+            svg += `<rect x="0" y="${zeroY}" width="100" height="${100 - zeroY}" fill="#FFEBEE" opacity="0.5" /><line x1="0" y1="${zeroY}" x2="100" y2="${zeroY}" stroke="var(--danger)" stroke-width="1" stroke-dasharray="2 2" vector-effect="non-scaling-stroke" />`;
+        }
+        let pathD = ''; let labelsHtml = ''; const step = validKeys.length > 1 ? 100 / (validKeys.length - 1) : 100;
+        validKeys.forEach((k, i) => {
+            const val = State.months[k].stockSnapshot; const x = validKeys.length > 1 ? i * step : 50; const y = 100 - ((val - minVal) / range) * 100;
+            pathD += i === 0 ? `M ${x} ${y} ` : `L ${x} ${y} `;
+            svg += `<circle cx="${x}" cy="${y}" r="2" fill="var(--primary)" vector-effect="non-scaling-stroke" />`;
+            const transform = i === 0 ? 'translateX(0)' : (i === validKeys.length-1 ? 'translateX(-100%)' : 'translateX(-50%)');
+            labelsHtml += `<div style="position:absolute; left:${x}%; top:calc(${y}% - 14px); transform:${transform}; font-size:10px; color:var(--text-sub); pointer-events:none; font-weight:bold;">${formatNum(val)}</div>`;
+            labelsHtml += `<div style="position:absolute; left:${x}%; bottom:-4px; transform:${transform}; font-size:10px; color:var(--text-sub); pointer-events:none;">${k.split('-')[1]}月</div>`;
+        });
+        svg = `<path d="${pathD}" fill="none" stroke="var(--primary)" stroke-width="2" vector-effect="non-scaling-stroke" />` + svg;
+        html += `<svg viewBox="0 0 100 100" preserveAspectRatio="none" style="width:100%; height:100%; display:block; overflow:visible;">${svg}</svg>` + labelsHtml + '</div>';
+        document.getElementById('widget-stock-trend').innerHTML = html;
+    },
+    renderHistoryList() {
+        const h = this.getFilteredHistory().sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+        if(h.length === 0) { document.getElementById('widget-history-list').innerHTML = '<div class="text-center text-sm" style="padding: 20px;">履歴がありません</div>'; return; }
+        const displayList = h.slice(0, 50); let html = '';
+        displayList.forEach(x => { 
+            const btn = `<button class="btn-outline btn-sm" onclick="App.cancelHistory('${x.id}')">取消</button>`;
+            html += `<div class="history-item"><div><div class="text-sm">${formatDateTime(x.timestamp)}</div><div style="font-weight:bold;">${x.castName}</div><div class="text-sm">${x.packageLabel} — <span class="num-font text-main" style="font-weight:bold;">${formatNum(x.cost)} ${getUnit()}</span></div></div>${btn}</div>`; 
+        });
+        if(h.length > 50) html += `<div class="text-center text-sm mt-4">他 ${h.length - 50} 件</div>`;
+        document.getElementById('widget-history-list').innerHTML = html;
+    }
+};
+
+window.onload = () => App.init();
+</script>
+</body>
+</html>

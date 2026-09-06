@@ -97,9 +97,7 @@
         .flex-row-wrap { display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start; }
 
         #zone-casts { overflow-x: auto; overflow-y: hidden; white-space: nowrap; padding-bottom: 8px; display: flex; align-items: flex-start; gap: 12px; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; }
-        @media (min-width: 800px) {
-            #zone-casts { flex-wrap: wrap; overflow-x: visible; overflow-y: visible; }
-        }
+        #zone-casts::before, #zone-casts::after { content: ''; margin: auto; }
         .cast-card { display: inline-block; white-space: normal; vertical-align: top; width: 240px; height: 100%; background: var(--card-bg); border-radius: 12px; padding: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); scroll-snap-align: start; flex-shrink: 0; overflow-y: auto; }
         .cast-blocks-container { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
         
